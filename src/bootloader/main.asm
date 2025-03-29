@@ -24,7 +24,7 @@ main:
     int 0x10
 
     mov ah, 0x02
-	mov al, 4
+	mov al, 16
 	mov ch, 0
 	mov cl, 2
 	mov dh, 0
@@ -33,7 +33,7 @@ main:
 
     jmp 0x7e00
 
-    hlt
+    jmp $
 
 times 510-($-$$) db 0
 dw 0xaa55
