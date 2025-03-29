@@ -3,4 +3,3 @@ nasm src/bootloader/main.asm -f bin -o build/boot.bin
 nasm src/kernel/main.asm -f bin -o build/kernel.bin
 cat build/boot.bin build/kernel.bin > build/floppy.img
 truncate -s 1440k build/floppy.img
-qemu-system-i386 -drive file=build/floppy.img,format=raw,if=floppy 

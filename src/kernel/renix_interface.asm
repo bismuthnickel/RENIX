@@ -13,6 +13,7 @@
 ; Returns:
 ;   - none
 ;
+align 32
 renix_interface:
     cmp ah, 0
     je .putc
@@ -29,7 +30,6 @@ renix_interface:
     cmp ah, 6
     je .set_format
     jmp .badahvalue
-    db "putc"
 .putc:
     call putc
     jmp .return
@@ -80,6 +80,7 @@ renix_interface_interrupt:
 ; Parameters:
 ;   - BH: formatting
 ;
+align 32
 clear:
     pusha
     mov [putc.lastformat], bh
@@ -106,6 +107,7 @@ clear:
 ;   - CH: row
 ;   - CL: column
 ;
+align 32
 set_cursor:
     pusha
     mov [0x500], cx
@@ -142,6 +144,7 @@ set_cursor:
 ; Returns:
 ;   - CX: 1D cursor
 ;
+align 32
 get_1d:
     pusha
     mov al, ch
@@ -169,6 +172,7 @@ get_1d:
 ;   - CH: row
 ;   - CL: column
 ;
+align 32
 get_2d:
     pusha
     mov ax, cx
@@ -191,6 +195,7 @@ get_2d:
 ;   - AL: character
 ;   - BH: formatting
 ;
+align 32
 putc:
     pusha
     mov dh, bh
@@ -220,6 +225,7 @@ putc:
 ;   - SI: pointer to string
 ;   - BH: formatting
 ;
+align 32
 puts:
     push ax
     push bx
@@ -242,6 +248,7 @@ puts:
 ; Parameters:
 ;   - SI: pointer to string
 ;
+align 32
 special_puts:
     push ax
     push bx
