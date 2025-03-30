@@ -29,6 +29,10 @@ renix_interface:
     je .special_puts
     cmp ah, 6
     je .set_format
+    cmp ah, 7
+    je .scroll
+    cmp ah, 8
+    je .convert_cursor
     jmp .badahvalue
 .putc:
     call putc
@@ -43,18 +47,19 @@ renix_interface:
     call set_cursor
     jmp .return
 .get_key:
-    xor ah, ah
-    int 0x16
+    call get_key
     jmp .return
 .special_puts:
     call special_puts
     jmp .return
 .set_format:
-    push cx
-    mov [putc.lastformat], bh
-    mov cx, [0x500]
-    call set_cursor
-    pop cx
+    call set_format
+    jmp .return
+.scroll:
+    call scroll
+    jmp .return
+.convert_cursor:
+    call convert_cursor
     jmp .return
 .badahvalue:
     pusha
@@ -97,7 +102,7 @@ clear:
     ret
 
 ;
-; setcursor
+; set_cursor
 ; Description:
 ;   Sets the cursor, including hardware
 ;   cursor, and changes the foreground
@@ -132,6 +137,18 @@ set_cursor:
     popa
     ret
 .cursor: dw 0
+
+; get_key
+; Description:
+;   Gets a key from the user by
+;   using interrupt 0x16
+; Returns:
+;   - AH: BIOS scan code
+;   - AL: ASCII character
+;
+get_key:
+    xor ah, ah
+    int 0x16
 
 ;
 ; get_1d
@@ -264,4 +281,97 @@ special_puts:
 .return:
     pop bx
     pop ax
+    ret
+
+;
+; set_format
+; Description:
+;   Sets the formatting for the character at the cursor
+; Parameters:
+;   - BH: formatting
+;
+set_format:
+    push cx
+    mov [putc.lastformat], bh
+    mov cx, [0x500]
+    call set_cursor
+    pop cx
+
+;
+; scroll
+; Description:
+;   Moves each row in video memory 1 up,
+;   clearing the last row.
+;
+scroll:
+    pusha
+    mov cx, 0
+.loop:
+    call scroll_1_row
+    inc cx
+    cmp cx, 25
+    jne .loop
+    mov cx, [0x500]
+    dec ch
+    call set_cursor
+    popa
+    ret
+
+;
+; scroll_1_row
+; Description:
+;   Helper function for scroll that
+;   sets a row to the row below it,
+;   or blank if the row number is
+;   24
+; Parameters:
+;   - CX: row number
+;
+scroll_1_row:
+    pusha
+    mov dx, cx
+    mov ax, 160
+    mul cx
+    mov bx, ax
+    mov cx, 160
+    cmp dx, 24
+    je .clear_instead
+.loop:
+    mov dx, [fs:bx+160]
+    mov [fs:bx], dx
+    inc bx
+    loop .loop
+    jmp .return
+.clear_instead:
+    mov word [fs:bx], 0
+    inc bx
+    loop .loop
+    jmp .return
+.return:
+    popa
+    ret
+
+;
+; convert_cursor
+; Description:
+;   Convert either a 2D cursor
+;   to a 1D cursor or a 1D
+;   cursor to a 2D cursor
+; Parameters:
+;   - CX: 1D or 2D cursor
+;   - AL: what type of cursor
+;       are you converting
+;       from? (0 for 1D and
+;       any other for 2D)
+; Returns:
+;   - CX: 1D or 2D cursor
+;
+convert_cursor:
+    cmp al, 0
+    je .get_2d
+    call get_1d
+    jmp .return
+.get_2d:
+    call get_2d
+.return:
     ret

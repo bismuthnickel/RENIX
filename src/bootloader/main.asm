@@ -35,5 +35,5 @@ main:
 
     jmp $
 
-times 510-($-$$) db 0
+times 510-($-$$) db 0x90
 dw 0xaa55
